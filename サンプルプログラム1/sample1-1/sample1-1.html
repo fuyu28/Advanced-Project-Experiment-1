@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="150; URL=">
+    <link rel="stylesheet" type="text/css" href="sample1-1.css">
+    <script>
+        var request = new XMLHttpRequest();
+        request.open('GET', 'https://airoco.necolico.jp/data-api/latest?id=CgETViZ2&subscription-key=6b8aa7133ece423c836c38af01c59880', true);
+        request.responseType = 'json';
+        request.send();
+        request.onload = function () {
+            var sens_num = 1; // センサ番号
+            var jsonData = this.response;
+            var data = JSON.stringify(jsonData, null, ' ');
+            jsons = JSON.parse(data);
+            console.log(jsons); 
+            console.log(jsons[sens_num].co2); 
+            var cmnt = "---";
+            var obj = document.getElementById("co2");
+            if (jsons[sens_num].co2 >= 1000) {
+                obj.style.backgroundColor = "#EE5500";
+                cmnt = "<hr><p align = \"center\" class = \"txt4\">やや混雑</p>";
+            } else {
+                obj.style.backgroundColor = "#00AA00";
+                cmnt = "<hr><p align = \"center\" class = \"txt4\">換気良好</p>";
+            }
+            co2.innerHTML = "<p align = \"center\" class = \"txt1\"><br></p><p align =\"center\" class = \"txt5\" > " + jsons[sens_num].co2 + "ppm </p> " + cmnt ;
+        }
+        request.onerror = function () {
+            console.log("受信失敗");
+        }
+    </script>
+</head>
+
+<body>
+    <p class="txt4" align="center">当部屋のCO2濃度は</p>
+    <div id="co2"></div>
+    <p class="txt4" align="center">情報工学科</p>
+</body>
+
+</html>
