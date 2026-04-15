@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airoco Multi Sensor Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.0/chart.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d6dee8;
+      --text: #19324a;
+      --muted: #60758b;
+      --accent-1: #006e90;
+      --accent-2: #f18f01;
+      --accent-3: #8f2d56;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, #d7eef9 0, transparent 24%),
+        linear-gradient(180deg, #eef5fb 0%, var(--bg) 100%);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .card,
+    .chart-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(17, 52, 86, 0.08);
+    }
+
+    .card {
+      padding: 18px;
+    }
+
+    .sensor-name {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .latest-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 10px;
+      border-radius: 12px;
+      background: #f6f9fc;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .metric-value {
+      margin-top: 4px;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .chart-grid {
+      display: grid;
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .chart-panel {
+      padding: 18px;
+    }
+
+    .chart-panel h2 {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      min-height: 320px;
+    }
+
+    @media (max-width: 720px) {
+      .latest-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-wrap {
+        min-height: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Airoco Multi Sensor Dashboard</h1>
+    <p>R3 エレベーターホール 3 台の Airoco センサについて、過去 24 時間分の CO2 濃度・温度・湿度を比較表示します。</p>
+    <div id="status" class="status">データを取得しています...</div>
+
+    <section id="latest-cards" class="cards"></section>
+
+    <section class="chart-grid">
+      <article class="chart-panel">
+        <h2>CO2 density [ppm]</h2>
+        <div class="chart-wrap"><canvas id="co2-chart"></canvas></div>
+      </article>
+      <article class="chart-panel">
+        <h2>Temperature [deg]</h2>
+        <div class="chart-wrap"><canvas id="temperature-chart"></canvas></div>
+      </article>
+      <article class="chart-panel">
+        <h2>Relative humidity [%]</h2>
+        <div class="chart-wrap"><canvas id="humidity-chart"></canvas></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="./adv1-2.js"></script>
+</body>
+</html>
