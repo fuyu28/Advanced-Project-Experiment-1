@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.6"
 # dependencies = [
 #   "requests",
 #   "RPi.GPIO",
@@ -9,8 +9,9 @@
 
 import os
 import time
+import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List
 
 import requests
 import RPi.GPIO as GPIO
@@ -22,6 +23,20 @@ DEFAULT_BUZZER_PIN = 18
 DEFAULT_CO2_THRESHOLD = 1000.0
 DEFAULT_POLL_INTERVAL = 5.0
 DEFAULT_SENSOR_INDEX = 0
+
+
+def normalize_sensor_name(value: str) -> str:
+    return unicodedata.normalize("NFKC", value).strip()
+
+
+def get_sensor_label(sensor: Dict[str, Any]) -> str:
+    return str(
+        sensor.get("sensorName")
+        or sensor.get("name")
+        or sensor.get("devName")
+        or sensor.get("sensorNumber")
+        or "unknown"
+    ).strip()
 
 
 def load_env(path: Path) -> None:
@@ -64,8 +79,7 @@ def getenv_gpio_state(name: str, default: int) -> int:
 
     raise ValueError(f"{name} には HIGH または LOW を指定してください: {value}")
 
-
-def fetch_latest_data(subscription_key: str, id_hash_key: str) -> list[dict[str, Any]]:
+def fetch_latest_data(subscription_key: str, id_hash_key: str) -> List[Dict[str, Any]]:
     response = requests.get(
         API_URL,
         params={
@@ -82,14 +96,23 @@ def fetch_latest_data(subscription_key: str, id_hash_key: str) -> list[dict[str,
 
     return data
 
-
-def select_sensor(sensors: list[dict[str, Any]]) -> dict[str, Any]:
+def select_sensor(sensors: List[Dict[str, Any]]) -> Dict[str, Any]:
     sensor_name = os.getenv("SENSOR_NAME")
     if sensor_name:
+        normalized_sensor_name = normalize_sensor_name(sensor_name)
+        available_names = []
         for sensor in sensors:
-            if str(sensor.get("name", "")).strip() == sensor_name:
+            current_name = get_sensor_label(sensor)
+            if current_name:
+                available_names.append(current_name)
+            if normalize_sensor_name(current_name) == normalized_sensor_name:
                 return sensor
-        raise ValueError(f"指定した SENSOR_NAME のセンサが見つかりません: {sensor_name}")
+        raise ValueError(
+            "指定した SENSOR_NAME のセンサが見つかりません: {}\n利用可能なセンサ: {}".format(
+                sensor_name,
+                ", ".join(available_names) if available_names else "なし",
+            )
+        )
 
     sensor_index = getenv_int("SENSOR_INDEX", DEFAULT_SENSOR_INDEX)
     if sensor_index < 0 or sensor_index >= len(sensors):
@@ -125,8 +148,15 @@ def main() -> None:
                 raise ValueError("AirocO API からセンサ情報を取得できませんでした")
 
             sensor = select_sensor(sensors)
-            sensor_label = str(sensor.get("name") or sensor.get("devName") or "unknown")
-            co2 = float(sensor["co2"])
+            sensor_label = get_sensor_label(sensor)
+            raw_co2 = sensor.get("co2")
+            if raw_co2 is None:
+                print("{}: CO2 値が未取得のため、この回はスキップします".format(sensor_label))
+                GPIO.output(buzzer_pin, buzzer_inactive_state)
+                time.sleep(poll_interval)
+                continue
+
+            co2 = float(raw_co2)
 
             if co2 >= co2_threshold:
                 GPIO.output(buzzer_pin, buzzer_active_state)
